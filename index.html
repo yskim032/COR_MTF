@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DTX Web Converter</title>
+    <!-- Include JSZip and FileSaver for client-side zip creation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --container-bg: #111827;
+            --text-color: #f3f4f6;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --border-color: #1f2937;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --card-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s ease-in-out;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            padding: 40px;
+            width: 100%;
+            max-width: 650px;
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            margin-top: 0;
+            text-align: center;
+            font-weight: 800;
+            font-size: 28px;
+            color: #ffffff;
+            letter-spacing: -0.5px;
+            margin-bottom: 24px;
+        }
+
+        h1 span {
+            color: var(--accent-color);
+        }
+
+        .drop-zone {
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 12px;
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            background: rgba(17, 24, 39, 0.5);
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--accent-color);
+            background: rgba(59, 130, 246, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .drop-zone input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .drop-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .drop-subtitle {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .file-list {
+            margin-top: 25px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #000000;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            display: none;
+        }
+
+        .file-list.active {
+            display: block;
+        }
+
+        .file-item {
+            font-family: 'JetBrains Mono', Consolas, monospace;
+            font-size: 13px;
+            padding: 8px 0;
+            border-bottom: 1px solid #1f2937;
+            display: flex;
+            align-items: center;
+        }
+
+        .file-item::before {
+            content: "📄";
+            margin-right: 10px;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 24px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 25px;
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn:hover:not(:disabled) {
+            background-color: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px -3px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn:active:not(:disabled) {
+            transform: scale(0.98);
+        }
+
+        .btn:disabled {
+            background-color: #374151;
+            color: #9ca3af;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .status {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .status.success {
+            color: var(--success-color);
+        }
+
+        .status.error {
+            color: var(--error-color);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, .3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .firebase-notice {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #6b7280;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>DTX <span>Converter</span></h1>
+
+        <div class="drop-zone" id="dropZone">
+            <div class="icon">📁</div>
+            <div class="drop-title">Drop your DTX files here or click to browse</div>
+            <div class="drop-subtitle">Supports multiple files (*.GVA, *.txt, *.xls, *.csv, etc.)</div>
+            <input type="file" id="fileInput" multiple>
+        </div>
+
+        <div class="file-list" id="fileList"></div>
+
+        <button class="btn" id="convertBtn" disabled>Convert & Download ZIP</button>
+        <div class="status" id="statusMsg"></div>
+    </div>
+
+    <div class="firebase-notice">
+        Statistics powered by Firebase Firestore ✨
+    </div>
+
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+        // ==========================================
+        // 👉 TODO: 아래 영역에 사용자님의 Firebase Config 설정을 붙여넣어주세요!
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT_ID.appspot.com",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+        // ==========================================
+
+        let db = null;
+        try {
+            // apiKey가 기본 문자열이 아닐 때만 파이어베이스 활성화
+            if (firebaseConfig.apiKey !== "YOUR_API_KEY") {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                recordIPVisit(); // 초기 로딩 시 방문자(IP) 기록
+            } else {
+                console.log("Firebase is not configured yet. Skipping analytics.");
+            }
+        } catch (e) {
+            console.error("Firebase Initialization Error:", e);
+        }
+
+        // 방문자 접속 통계 기록 (IP 기반)
+        async function recordIPVisit() {
+            if (!db) return;
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                const ip = data.ip;
+
+                const today = new Date().toISOString().split('T')[0];
+                const visitRef = doc(db, "statistics", `visits_${today}`);
+
+                // IP 배열에 중복 없이 추가
+                await setDoc(visitRef, { ips: arrayUnion(ip) }, { merge: true });
+                console.log("Visit recorded.");
+            } catch (e) {
+                console.error("Failed to record visit:", e);
+            }
+        }
+
+        // 변환 성공 통계 누적
+        async function recordConversion(fileCount) {
+            if (!db) return;
+            try {
+                const today = new Date().toISOString().split('T')[0];
+                const convRef = doc(db, "statistics", `conversions_${today}`);
+
+                // 변환 개수만큼 누적으로 더하기
+                await setDoc(convRef, { count: increment(fileCount) }, { merge: true });
+                console.log(`Conversion of ${fileCount} files recorded!`);
+            } catch (e) {
+                console.error("Failed to record conversion:", e);
+            }
+        }
+
+        // ==========================================
+        // UI Interaction & File Processing Logic
+        // ==========================================
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const convertBtn = document.getElementById('convertBtn');
+        const statusMsg = document.getElementById('statusMsg');
+
+        let selectedFiles = [];
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+        });
+
+        dropZone.addEventListener('drop', e => handleFiles(e.dataTransfer.files), false);
+        fileInput.addEventListener('change', function () { handleFiles(this.files); });
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            updateFileList();
+            convertBtn.disabled = selectedFiles.length === 0;
+            statusMsg.textContent = '';
+            statusMsg.className = 'status';
+        }
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            if (selectedFiles.length > 0) {
+                fileList.classList.add('active');
+                selectedFiles.forEach(file => {
+                    const el = document.createElement('div');
+                    el.className = 'file-item';
+                    el.textContent = file.name;
+                    fileList.appendChild(el);
+                });
+                fileList.scrollTop = fileList.scrollHeight;
+            } else {
+                fileList.classList.remove('active');
+            }
+        }
+
+        convertBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+
+            convertBtn.disabled = true;
+            convertBtn.innerHTML = '<div class="spinner"></div> Processing...';
+            statusMsg.textContent = '';
+            statusMsg.className = 'status';
+
+            try {
+                const zip = new JSZip();
+                const replacementString = 'HDR              55MFT                               096N';
+
+                // 모든 파일을 순회하며 클라이언트 단에서 변환 처리
+                for (let file of selectedFiles) {
+                    const textContent = await file.text();
+
+                    // 정규식을 사용해 첫번째 줄바꿈 위치 찾기 (윈도우, 리눅스 줄바꿈 차이 등 모두 고려)
+                    const firstNewlineMatch = textContent.match(/\r?\n/);
+                    let newContent = "";
+
+                    if (firstNewlineMatch) {
+                        const firstNewlineIndex = firstNewlineMatch.index;
+                        // 첫번째 줄바꿈 뒤의 모든 내용을 보존
+                        const remainder = textContent.substring(firstNewlineIndex);
+                        newContent = replacementString + remainder;
+                    } else {
+                        // 줄바꿈이 아예 없는 파일이 있을 경우 전체를 교체
+                        newContent = replacementString;
+                    }
+
+                    // ZIP 객체에 변환된 내용 삽입
+                    zip.file(file.name, newContent);
+                }
+
+                // JSZip을 통해 Blob 압축 파일 생성 및 유저에게 다운로드 전송
+                const zipBlob = await zip.generateAsync({ type: "blob" });
+
+                // 날짜 포맷이 포함된 다운로드 이름
+                const dt = new Date();
+                const dateString = `${dt.getFullYear()}${String(dt.getMonth() + 1).padStart(2, '0')}${String(dt.getDate()).padStart(2, '0')}${String(dt.getHours()).padStart(2, '0')}${String(dt.getMinutes()).padStart(2, '0')}${String(dt.getSeconds()).padStart(2, '0')}`;
+
+                saveAs(zipBlob, `converted_${dateString}.zip`);
+
+                statusMsg.textContent = `✅ Successfully converted ${selectedFiles.length} files!`;
+                statusMsg.className = 'status success';
+
+                // 파이어베이스 통계 업데이트
+                recordConversion(selectedFiles.length);
+
+            } catch (err) {
+                console.error("Conversion Error:", err);
+                statusMsg.textContent = '❌ Error during conversion. Check console.';
+                statusMsg.className = 'status error';
+            } finally {
+                convertBtn.disabled = false;
+                convertBtn.textContent = 'Convert & Download ZIP';
+            }
+        });
+    </script>
+</body>
+
+</html>
