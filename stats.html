@@ -122,6 +122,7 @@
                         <tr>
                             <th>Date</th>
                             <th>Total</th>
+                            <th>Converter IPs</th>
                         </tr>
                     </thead>
                     <tbody id="conversionsTable"></tbody>
@@ -173,9 +174,13 @@
                     const data = doc.data();
 
                     if (id.startsWith("conversions_")) {
+                        const logs = data.logs || [];
+                        // 중복을 제거한 고유 IP 리스트 추출
+                        const uniqueIPs = [...new Set(logs.map(l => l.ip))];
                         conversions.push({
                             date: id.replace("conversions_", ""),
-                            count: data.count || 0
+                            count: data.count || 0,
+                            ips: uniqueIPs.join(", ")
                         });
                     } else if (id.startsWith("visits_")) {
                         visits.push({
@@ -193,10 +198,10 @@
                 const visitTable = document.getElementById('visitorsTable');
 
                 if (conversions.length === 0) {
-                    convTable.innerHTML = '<tr><td colspan="2">No data yet</td></tr>';
+                    convTable.innerHTML = '<tr><td colspan="3">No data yet</td></tr>';
                 } else {
                     conversions.forEach(row => {
-                        convTable.innerHTML += `<tr><td>${row.date}</td><td>${row.count}</td></tr>`;
+                        convTable.innerHTML += `<tr><td>${row.date}</td><td>${row.count}</td><td>${row.ips || "-"}</td></tr>`;
                     });
                 }
 

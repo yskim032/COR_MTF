@@ -270,19 +270,23 @@
             console.error("Firebase Initialization Error:", e);
         }
 
+        let userIP = null; // IP 캐싱용
+
         // 방문자 접속 통계 기록 (IP 기반)
         async function recordIPVisit() {
             if (!db) return;
             try {
-                const res = await fetch('https://api.ipify.org?format=json');
-                const data = await res.json();
-                const ip = data.ip;
+                if (!userIP) {
+                    const res = await fetch('https://api.ipify.org?format=json');
+                    const data = await res.json();
+                    userIP = data.ip;
+                }
 
                 const today = new Date().toISOString().split('T')[0];
                 const visitRef = doc(db, "statistics", `visits_${today}`);
 
                 // IP 배열에 중복 없이 추가
-                await setDoc(visitRef, { ips: arrayUnion(ip) }, { merge: true });
+                await setDoc(visitRef, { ips: arrayUnion(userIP) }, { merge: true });
                 console.log("Visit recorded.");
             } catch (e) {
                 console.error("Failed to record visit:", e);
@@ -293,12 +297,24 @@
         async function recordConversion(fileCount) {
             if (!db) return;
             try {
+                // IP가 없으면 가져오기
+                if (!userIP) {
+                    const res = await fetch('https://api.ipify.org?format=json');
+                    const data = await res.json();
+                    userIP = data.ip;
+                }
+
                 const today = new Date().toISOString().split('T')[0];
+                const time = new Date().toLocaleTimeString();
                 const convRef = doc(db, "statistics", `conversions_${today}`);
 
-                // 변환 개수만큼 누적으로 더하기
-                await setDoc(convRef, { count: increment(fileCount) }, { merge: true });
-                console.log(`Conversion of ${fileCount} files recorded!`);
+                // 변환 개수를 누적하고, 어떤 IP가 몇개 바꿨는지 로그도 함께 저장
+                await setDoc(convRef, {
+                    count: increment(fileCount),
+                    logs: arrayUnion({ ip: userIP, count: fileCount, time: time })
+                }, { merge: true });
+
+                console.log(`Conversion of ${fileCount} files recorded by ${userIP}!`);
             } catch (e) {
                 console.error("Failed to record conversion:", e);
             }
