@@ -40,30 +40,33 @@
 
         .container {
             background-color: var(--container-bg);
-            border-radius: 20px;
+            border-radius: 24px;
             padding: 40px;
             width: 100%;
             max-width: 650px;
-            border: 2px solid #facc15;
+            border: 3px solid #ffff00;
             position: relative;
-            animation: neon-pulse 2.5s infinite alternate ease-in-out;
-            background-clip: padding-box;
+            /* 더 강력한 네온 효과 애니메이션 */
+            animation: neon-glow-intense 2s infinite alternate ease-in-out;
+            margin: 20px;
         }
 
-        @keyframes neon-pulse {
+        @keyframes neon-glow-intense {
             from {
-                box-shadow: 0 0 10px rgba(250, 204, 21, 0.2),
-                    0 0 20px rgba(250, 204, 21, 0.1),
-                    inset 0 0 5px rgba(250, 204, 21, 0.1);
-                border-color: #ca8a04;
+                box-shadow: 0 0 5px #ffff00,
+                    0 0 10px #ffff00,
+                    0 0 20px rgba(255, 255, 0, 0.4),
+                    inset 0 0 5px #ffff00;
+                border-color: #eab308;
             }
 
             to {
-                box-shadow: 0 0 20px rgba(250, 204, 21, 0.6),
-                    0 0 40px rgba(250, 204, 21, 0.4),
-                    0 0 60px rgba(250, 204, 21, 0.2),
-                    inset 0 0 10px rgba(250, 204, 21, 0.3);
-                border-color: #facc15;
+                box-shadow: 0 0 15px #ffff00,
+                    0 0 30px #ffff00,
+                    0 0 50px #ffff00,
+                    0 0 80px rgba(255, 255, 0, 0.3),
+                    inset 0 0 15px #ffff00;
+                border-color: #ffff00;
             }
         }
 
@@ -71,14 +74,15 @@
             margin-top: 0;
             text-align: center;
             font-weight: 800;
-            font-size: 28px;
+            font-size: 32px;
             color: #ffffff;
-            letter-spacing: -0.5px;
-            margin-bottom: 24px;
+            letter-spacing: -1px;
+            margin-bottom: 30px;
         }
 
         h1 span {
-            color: var(--accent-color);
+            color: #ffff00;
+            text-shadow: 0 0 10px rgba(255, 255, 0, 0.8);
         }
 
         .drop-zone {
