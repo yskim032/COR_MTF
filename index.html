@@ -40,12 +40,31 @@
 
         .container {
             background-color: var(--container-bg);
-            border-radius: 16px;
-            box-shadow: var(--card-shadow);
+            border-radius: 20px;
             padding: 40px;
             width: 100%;
             max-width: 650px;
-            border: 1px solid var(--border-color);
+            border: 2px solid #facc15;
+            position: relative;
+            animation: neon-pulse 2.5s infinite alternate ease-in-out;
+            background-clip: padding-box;
+        }
+
+        @keyframes neon-pulse {
+            from {
+                box-shadow: 0 0 10px rgba(250, 204, 21, 0.2),
+                    0 0 20px rgba(250, 204, 21, 0.1),
+                    inset 0 0 5px rgba(250, 204, 21, 0.1);
+                border-color: #ca8a04;
+            }
+
+            to {
+                box-shadow: 0 0 20px rgba(250, 204, 21, 0.6),
+                    0 0 40px rgba(250, 204, 21, 0.4),
+                    0 0 60px rgba(250, 204, 21, 0.2),
+                    inset 0 0 10px rgba(250, 204, 21, 0.3);
+                border-color: #facc15;
+            }
         }
 
         h1 {
