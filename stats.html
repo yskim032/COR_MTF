@@ -79,8 +79,15 @@
         th,
         td {
             text-align: left;
-            padding: 14px 16px;
+            padding: 14px 12px;
             border-bottom: 1px solid var(--border-color);
+        }
+
+        /* Prevent date wrapping */
+        th:first-child,
+        td:first-child {
+            white-space: nowrap;
+            min-width: 105px;
         }
 
         th {
