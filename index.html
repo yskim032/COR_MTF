@@ -226,6 +226,58 @@
             }
         }
 
+        .stats-container {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 0, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+            position: relative;
+        }
+
+        .stat-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -7.5px;
+            top: 20%;
+            height: 60%;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            text-transform: uppercase;
+            color: #9ca3af;
+            letter-spacing: 1.5px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 900;
+            color: #ffff00;
+            text-shadow: 0 0 15px rgba(255, 255, 0, 0.4);
+            line-height: 1;
+        }
+
+        .stat-value span {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-left: 6px;
+            font-weight: 400;
+        }
+
         .firebase-notice {
             margin-top: 20px;
             font-size: 12px;
@@ -250,6 +302,18 @@
         <div class="file-list" id="fileList"></div>
 
         <button class="btn" id="convertBtn" disabled>Convert & Download ZIP</button>
+
+        <div class="stats-container" id="statsContainer">
+            <div class="stat-item">
+                <div class="stat-label">Selected Files</div>
+                <div class="stat-value" id="selectedCountValue">0<span>files</span></div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Converted Files</div>
+                <div class="stat-value" id="convertedCountValue">0<span>files</span></div>
+            </div>
+        </div>
+
         <div class="status" id="statusMsg"></div>
 
         <div style="margin-top: 25px; text-align: center; font-size: 14px;">
@@ -352,8 +416,11 @@
         const fileList = document.getElementById('fileList');
         const convertBtn = document.getElementById('convertBtn');
         const statusMsg = document.getElementById('statusMsg');
+        const selectedCountValue = document.getElementById('selectedCountValue');
+        const convertedCountValue = document.getElementById('convertedCountValue');
 
         let selectedFiles = [];
+        let totalSessionConverted = 0;
 
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             dropZone.addEventListener(eventName, preventDefaults, false);
@@ -379,9 +446,15 @@
         function handleFiles(files) {
             selectedFiles = Array.from(files);
             updateFileList();
+            updateStats();
             convertBtn.disabled = selectedFiles.length === 0;
             statusMsg.textContent = '';
             statusMsg.className = 'status';
+        }
+
+        function updateStats() {
+            selectedCountValue.innerHTML = `${selectedFiles.length}<span>files</span>`;
+            convertedCountValue.innerHTML = `${totalSessionConverted}<span>files</span>`;
         }
 
         function updateFileList() {
@@ -448,6 +521,10 @@
 
                 // 파이어베이스 통계 업데이트
                 recordConversion(selectedFiles.length);
+
+                // 로컬 통계 업데이트
+                totalSessionConverted += selectedFiles.length;
+                updateStats();
 
             } catch (err) {
                 console.error("Conversion Error:", err);
