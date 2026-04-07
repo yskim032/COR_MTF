@@ -299,8 +299,6 @@
             <input type="file" id="fileInput" multiple>
         </div>
 
-        <div class="file-list" id="fileList"></div>
-
         <button class="btn" id="convertBtn" disabled>Convert & Download ZIP</button>
 
         <div class="stats-container" id="statsContainer">
@@ -413,7 +411,6 @@
         // ==========================================
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
-        const fileList = document.getElementById('fileList');
         const convertBtn = document.getElementById('convertBtn');
         const statusMsg = document.getElementById('statusMsg');
         const selectedCountValue = document.getElementById('selectedCountValue');
@@ -445,7 +442,6 @@
 
         function handleFiles(files) {
             selectedFiles = Array.from(files);
-            updateFileList();
             updateStats();
             convertBtn.disabled = selectedFiles.length === 0;
             statusMsg.textContent = '';
@@ -455,22 +451,6 @@
         function updateStats() {
             selectedCountValue.innerHTML = `${selectedFiles.length}<span>files</span>`;
             convertedCountValue.innerHTML = `${totalSessionConverted}<span>files</span>`;
-        }
-
-        function updateFileList() {
-            fileList.innerHTML = '';
-            if (selectedFiles.length > 0) {
-                fileList.classList.add('active');
-                selectedFiles.forEach(file => {
-                    const el = document.createElement('div');
-                    el.className = 'file-item';
-                    el.textContent = file.name;
-                    fileList.appendChild(el);
-                });
-                fileList.scrollTop = fileList.scrollHeight;
-            } else {
-                fileList.classList.remove('active');
-            }
         }
 
         convertBtn.addEventListener('click', async () => {
